@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>倾斜模型</title>
+    <link href="../Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <link href="./css/pretty.css" rel="stylesheet">
+    <script src="./js/jquery.min.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/slider.js"></script>
+    <!-- <script src='./WSCoordinate.js'></script> -->
+    <script type="text/javascript" src="./js/require.min.js" data-main="js/main"></script>
+    <style>
+        /* #cesiumContainer{
+            width: 820px;
+            height: 520px;
+        } */
+
+        #toolbar input {
+            vertical-align: middle;
+            padding-top: 2px;
+            padding-bottom: 2px;
+            margin: 10px 0px;
+            width: 150px;
+        }
+
+        .map-tools {
+            margin-left: 12px
+        }
+
+        .map-tools>div {
+            width: 123px;
+            height: 29px;
+            line-height: 29px;
+            background: #0C0A2A;
+            color: #ADB9E4;
+            border-radius: 3px;
+            margin-top: 5px;
+            font-size: 14px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        .map-tools>div>img {
+            margin: 0 10px;
+        }
+
+        .map-tools>div.active {
+            background: #2E2C6F;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <div class="map-tools">
+        <div style="z-index:100; position: absolute;top:30px;">
+            <img src="./images/111.png">门禁设备
+            <span id="num1">0</span>
+        </div>
+        <div style="z-index:100; position: absolute;top:65px;">
+            <img src="./images/122.png">监控设备
+            <span id="num2">0</span>
+        </div>
+        <div style="z-index:100; position: absolute;top:100px;">
+            <img src="./images/133.png">消防栓
+            <span id="num3">0</span>
+        </div>
+        <div style="z-index:100; position: absolute;top:135px;">
+            <img src="./images/144.png">井盖
+            <span id="num4">0</span>
+        </div>
+        <div style="z-index:100; position: absolute;top:170px;">
+            <img src="./images/155.png">一键报警
+            <span id="num5">0</span>
+        </div>
+        <div style="z-index:100; position: absolute;top:205px;">
+            <img src="./images/166.png">烟感
+            <span id="num6">0</span>
+        </div>
+        <div style="z-index:100; position: absolute;top:240px;">
+            <img src="./images/177.png">人脸抓拍
+            <span id="num6">0</span>
+        </div>
+        <div style="z-index:100; position: absolute;top:275px;">
+            <img src="./images/188.png">车辆抓拍
+            <span id="num6">0</span>
+        </div>
+    </div>
+    <!-- <img id="sillygif" style="position: absolute; width: 23%; height:15%; z-index: 2" src="images/timg.gif"> -->
+
+    <script type="text/javascript">
+        var num1 = 0, num2 = 0, num3 = 0, num = 0, num5 = 0, num6 = 0, point = null;
+        var dataArr = [];
+        var myIcon = '';
+        var stste = '';
+        var mapAllData = [];
+        var idArr = [];
+        var organId ;
+      
+        var door = [{ x:104.2407660508476, y:30.577377944468743, z: 1.463282327765377, id: 169, name: "皇冠北门进" },
+        { x: 104.24084483900646, y:30.57736965620878, z: 1.463282327765377, id: 170, name: "皇冠北门出" },
+        { x: 104.23938209691419, y: 30.57596959635402, z: 1.463282327765377, id: 167, name: "皇冠西门进" },
+        { x: 104.2393536839741, y: 30.575941302894883, z: 1.463282327765377, id: 168, name: "皇冠西门出" },
+        { x: 104.2393461966058, y: 30.57428349629092, z: 1.463282327765377, id: 156, name: "皇冠南一门进" },
+        { x: 104.2393661173291, y: 30.57416944234675, z: 1.463282327765377, id: 157, name: "皇冠南一门出" },
+        { x:104.24100445144274, y: 30.57432316901544, z: 1.463282327765377, id: 158, name: "皇冠南二门进" },
+        { x: 104.24107404266917, y: 30.57432316901544, z: 1.463282327765377, id: 159, name: "皇冠南二门出" },
+        { x:104.24362785888144, y: 30.577160482595662, z: 1.463282327765377, id: 165, name: "皇冠东门进" },
+        { x: 104.24362959471167, y: 30.577127344386956, z: 1.463282327765377, id: 166, name: "皇冠东门出" },];
+        var fire = [{ x: 104.2396643135266, y: 30.577206153996882, z: 1.463282327765377, id: 119, name: "868744034625487" },
+        { x: 104.24051831152583, y: 30.577107788122617, z: 1.463282327765377, id: 135, name: "868744034590202" },
+        { x: 104.24089808086384, y: 30.577107278033895, z: 1.463282327765377, id: 136, name: " 868744034673909" },
+        { x: 104.24200122294128, y: 30.576853058848302, z: 1.463282327765377, id: 137, name: "868744034577217" },
+        { x: 104.24302959471167, y: 30.577127344386956, z: 1.463282327765377, id: 138, name: "868744034673859" },]
+        var Manhole = [{  x: 104.2394536839741, y: 30.575941302894883, z: 1.463282327765377, id: 120, name: "868334032618013" },
+        {x:104.24097565506101, y: 30.574293105594775, z: 1.463282327765377, id: 123, name: "868334032620670" },
+        { x: 104.24080840415888, y: 30.577087275344483, z: 1.463282327765377, id: 124, name: "868334032620589" },
+        { x: 104.24241709440732, y: 30.577151974949725, z: 1.463282327765377, id: 126, name: "868334032620522" },
+        { x:104.2421833491868, y: 30.57532645446597, z: 1.463282327765377, id: 128, name: "868334032620696" },]
+   
+        var Callpolice = [{ x: 104.24092681594226, y: 30.577260777048068, z: 1.463282327765377, id: 174, name: "皇冠国际北门" },
+        { x: 104.2394103487868, y: 30.575867307102687, z: 1.463282327765377, id: 173, name: "皇冠国际西门" },
+        { x: 104.24103197123039, y: 30.574340850188322, z: 1.463282327765377, id: 178, name: "皇冠国际南二门" },
+        { x: 104.24362705888144, y: 30.57722829649652, z: 1.463282327765377, id: 175, name: "皇冠国际东门" },]
+        function onload(Cesium) {
+            if(GetUrlParame('organId')){
+                organId =  GetUrlParame('organId')
+       }
+            getNum(organId)
+            //初始化viewer部件
+            var viewer = new Cesium.Viewer('cesiumContainer', {
+                imageryProvider: new Cesium.SingleTileImageryProvider({
+                    url: "./images/bg-map.jpg"
+                })
+            });
+            var scene = viewer.scene;
+            var widget = viewer.cesiumWidget;
+            scene.skyBox.show = false;
+            var sceneLayer;
+            $('#loadingbar').remove();
+            try {
+                var promise = scene.open("http://222.211.78.59:8090/iserver/services/3D-323/rest/realspace");
+                Cesium.when(promise, function (layers) {
+                    var layer = scene.layers.find('ResultModel@435');
+                    var houseId = [32,33,31,30,29,27,24,23,18,17,15,14,86,148,160,161,10,9,8,35,36,39,37,40,7,6,5,4,3,2,1,45,47,50,52,53,54,128,126,127,125,124,123,121,120,119,118,56,117,57,81,80,82,]
+                    var architectureId = [12,85,83,84,129,130,136,113,90,89,88,87,115,114,112,162,163]
+                    var swimmingId = [137,22]
+                    var greenId = [167,165,166,164,141,132,131,145,143,144,42,158,38]
+                    layer.setObjsColor(swimmingId, Cesium.Color.LIGHTSKYBLUE ); 
+                    layer.setObjsColor(houseId, Cesium.Color.LIGHTBLUE); 
+                    layer.setObjsColor(greenId, Cesium.Color.PALETURQUOISE ); 
+                    layer.setObjsColor(architectureId, Cesium.Color.LIGHTBLUE); 
+                    sceneLayer = layer;
+                    //设置相机位置，定位至模型
+                    viewer.scene.camera.setView({
+                        //将经度、纬度、高度的坐标转换为笛卡尔坐标
+                        // destination: new Cesium.fromDegrees(104.241548594005930 ,30.575514911539450, 500),
+                        destination: new Cesium.Cartesian3( -1350991.1696224513,5323006.004660302, 3243999.2844258505),
+                        orientation: {
+                            heading: 6.283185307179586,
+                            pitch: -0.28392082092502213,
+                            roll: 6.283185279995271
+                        }
+                    });
+                }, function () {
+                    var title = '加载SCP失败，请检查网络连接状态或者url地址是否正确？';
+                    widget.showErrorPanel(title, undefined, e);
+                });
+            }
+            catch (e) {
+                if (widget._showRenderLoopErrors) {
+                    var title = '渲染时发生错误，已停止渲染。';
+                    widget.showErrorPanel(title, undefined, e);
+                }
+            }
+           
+            $(".map-tools>div").on('click', function getCoordinate() {
+                if ($(this).hasClass('active')) {
+
+                    if ($(this).index() == 0) {
+                        getData(1, false)
+                    }
+                    if ($(this).index() == 1) {
+                        getData(2, false)
+                    }
+                    if ($(this).index() == 2) {
+                        getData(3, false)
+                    }
+                    if ($(this).index() == 3) {
+                        getData(4, false)
+                    }
+                    if ($(this).index() == 4) {
+                        getData(5, false)
+                    }
+                    if ($(this).index() == 5) {
+                        getData(6, false)
+                    }
+                    if ($(this).index() == 6) {
+                        getData(7, false)
+                    }
+                    if ($(this).index() == 7) {
+                        getData(8, false)
+                    }
+                    $(this).removeClass("active")
+                } else {
+
+                    if ($(this).index() == 0) {
+                        getData(1, true)
+                    }
+                    if ($(this).index() == 1) {
+                        getData(2, true)
+                    }
+                    if ($(this).index() == 2) {
+                        getData(3, true)
+                    }
+                    if ($(this).index() == 3) {
+                        getData(4, true)
+                    }
+                    if ($(this).index() == 4) {
+                        getData(5, true)
+                    }
+                    if ($(this).index() == 5) {
+                        getData(6, true)
+                    }
+                    if ($(this).index() == 6) {
+                        getData(7, true)
+                    }
+                    if ($(this).index() == 7) {
+                        getData(8, true)
+                    }
+                    $(this).addClass("active")
+                }
+            }),
+            
+                getData = function (type, isShow) {
+                    dataArr = []
+                    $.ajax({
+                        url: "http://222.211.78.60:9103/bigscreen/statistics/deviceList/"+organId,
+                        type: "get",
+                        dataType: "json",
+                        success: function (data) {
+                            mapAllData = data.result
+                            if (data.code == 0) {
+                                num1 = 0;
+                                num2 = 0;
+                                num3 = 0;
+                                num4 = 0;
+                                num5 = 0;
+                                num6 = 0;
+                                num7 = 0;
+                                num8 = 0;
+                                for (var i = 0; i < data.result.length; i++) {
+                                    if (data.result[i].locationX * 1 && data.result[i].locationY * 1) {
+                                        if (data.result[i].type == "IDT2" && type == 1) {
+                                             //门禁设备
+                                            //  var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            dataArr = door
+                                            console.log(door);
+                                            num1++
+                                            myIcon = './images/11.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        } else if (data.result[i].type == "IDT0" && type == 2) {
+                                           //监控设备
+                                            // var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            console.log(dataArr);
+                                            num2++
+                                            myIcon = './images/22.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        } else if (data.result[i].type == "IDT6" && type == 3) {
+                                           //消防栓
+                                            // var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            dataArr = fire
+
+                                            console.log(dataArr);
+                                            num3++
+                                            myIcon = './images/33.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        } else if (data.result[i].type == "IDT7" && type == 4) {
+                                            //井盖
+                                            // var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            dataArr = Manhole
+                                            console.log(dataArr);
+                                            num4++
+                                            myIcon = './images/44.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        } else if (data.result[i].type == "IDT4" && type == 5) {
+                                             //一键报警
+                                            // var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            dataArr = Callpolice
+                                            console.log(dataArr);
+                                            num5++
+                                            myIcon = './images/55.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        } else if (data.result[i].type == "IDT5" && type == 6) {
+                                             //烟感
+                                            // var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            console.log(dataArr);
+                                            num6++
+                                            myIcon = './images/66.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        } else if (data.result[i].type == "IDT3" && type == 7) {
+                                           //人脸
+                                            // var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            console.log(dataArr);
+                                            num7++
+                                            myIcon = './images/77.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        } else if (data.result[i].type == "IDT1" && type == 8) {
+                                          //车辆
+                                            // var x = data.result[i].locationX * 1
+                                            // var y = data.result[i].locationY * 1
+                                            // var locationArr = gcj02towgs84(x, y)
+                                            // var obj = {}
+                                            // obj.x = locationArr[0]
+                                            // obj.y = locationArr[1]
+                                            // obj.id = data.result[i].id
+                                            // obj.name = data.result[i].name
+                                            // dataArr.push(obj)
+                                            console.log(dataArr);
+                                            num8++
+                                            myIcon = './images/88.png'
+                                            state = data.result[i].status == 1 ? '在线' : '离线'
+                                        }
+                                    }
+                                }
+                            }
+                            if (isShow) {
+                                //获取位置笛卡尔坐标
+                                dataArr.map((item, index) => {
+                                    var longitude = item.x;
+                                    var latitude = item.y;
+                                    var id = item.id
+                                    var name = item.name
+
+                                    // var height = cartographic.height;
+                                    var height = 50;
+                                    if (height < 0) {
+                                        height = 0;
+                                    }
+                                    viewer.entities.add({
+                                        id: id,
+                                        position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
+                                        billboard: {
+                                            image: myIcon,
+                                            width: 22,
+                                            height: 22,
+                                        },
+                                        visible: false,
+                                        name: "point",
+                                        description: name + '<br/>状态：' + state
+
+                                    });
+                                })
+                            } else {
+                                dataArr.map((item, index) => {
+                                    viewer.entities.removeById(item.id)
+                                })
+                            }
+                        }
+                    });
+                }
+            var typeIDT2 = [], typeIDT0 = [], typeIDT6 = [], typeIDT7 = [], typeIDT4 = [], typeIDT5 = [], typeIDT3 = [], typeIDT1 = []
+            function getNum(organId) {
+                $.ajax({
+                    url: "http://222.211.78.60:9103/bigscreen/statistics/deviceList/"+organId,
+                    type: "get",
+                    dataType: "json",
+                    success: function (data) {
+                        mapAllData = data.result
+                        mapAllData.map(item => {
+                            if (item.locationX * 1 && item.locationY * 1) {
+                                if (item.type == "IDT2") {
+                                    //门禁设备
+                                    typeIDT2.push(item)
+                                } else if (item.type == "IDT0") {
+                                    //监控设备
+                                    typeIDT0.push(item)
+
+                                } else if (item.type == "IDT6") {
+                                    //消防栓
+                                    typeIDT6.push(item)
+
+                                } else if (item.type == "IDT7") {
+                                    //井盖
+                                    typeIDT7.push(item)
+
+                                } else if (item.type == "IDT4") {
+                                    //一键报警
+                                    typeIDT4.push(item)
+                                } else if (item.type == "IDT5") {
+                                    //烟感
+                                    typeIDT5.push(item)
+                                } else if (item.type == "IDT3") {
+                                    //人脸
+                                    typeIDT3.push(item)
+                                } else if (item.type == "IDT1") {
+                                    //车辆
+                                    typeIDT1.push(item)
+                                }
+                            }
+
+                        })
+                        num1 = typeIDT2.length
+                        num2 = typeIDT0.length
+                        num3 = typeIDT6.length
+                        num4 = typeIDT7.length
+                        num5 = typeIDT4.length
+                        num6 = typeIDT5.length
+                        num7 = typeIDT3.length
+                        num8 = typeIDT1.length
+                        $("#num1").text(num1)
+                        $("#num2").text(num2)
+                        $("#num3").text(num3)
+                        $("#num4").text(num4)
+                        $("#num5").text(num5)
+                        $("#num6").text(num6)
+                        $("#num7").text(num7)
+                        $("#num8").text(num8)
+
+                    }
+                })
+            }
+        }
+        function   GetUrlParame (name) {
+        let reg = new RegExp("(^|\\?|&)" + name + "=([^&]*)(\\s|&|$)","i");
+        if(reg.test(window.location.href)){
+            return unescape(RegExp.$2.replace(/\+/g," "))
+        }else{
+            return false;
+        }
+    }
+
+
+    </script>
+</body>
+
+</html>
